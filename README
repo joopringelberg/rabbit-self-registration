@@ -1,0 +1,66 @@
+rabbit-self-registration
+======================
+
+### About
+This is a small service to enable self-registration from Perspectives to an existing RabbitMQ service.
+
+### Description
+Registration of a user in RabbitMQ, and setting her permissions, requires an admin account. For obvious reasons we do not want to distribute admin account credentials in the Perspectives client or PDR. To enable self-registration we therefore have created a service that actually does have these credentials. By sending it a triplet of user name, user password and queue name, this service creates that user and gives her 
+
+* configuring rights for the queue;
+* read permissions for the queue and amq.topic
+* and write permissions for the queue and amq.topic.
+
+To somewhat protect the RabbitMQ server, the service allows new users up to a limit. The limit can be set and inspected through the service.
+It also forbids registering the same user more than once.
+
+### Install
+
+### API
+These are the endpoints (routes) of the service:
+
+| Endpoint      | Method | Parameters           | Description  |
+| ------------- |--------|-------------| -----|
+| getmaxnumberofusers      |GET| none | integer number that is the upper limit |
+| getremainingnumberofaccounts |GET| none | integer number that gives the number of user accounts that can be created before the limit is reached|
+| setmaxnumberofusers |POST| {"maxusers"=10} |Sets the upper limit of new accounts to be created. Can be increased at any time! |
+| setadmincredentials| POST |{ "adminUserName":"joop", "adminPassword": "secret"}|The credentials of the existing admin account of RabbitMQ|
+| selfregister|POST|{ "userName", "cor", "password" "secret", "queueName": "myqueue" }| The details of the user account to create|
+
+
+### Starting, command line parameters
+The service can be started without configuration. By default it
+
+* runs on port 5988
+* expects the rabbitMQ admin interface on port 15672 (of the same machine, i.e. at localhost)
+
+The service offers the `http` protocol (not `https`). We expect the rabbitMQ service to speak `http`, too (not `https`).
+
+```
+node src/index.js
+```
+
+will start the service using the defaults. 
+
+```
+node src/index.js --serviceport=3000 --rabbitport=5000
+```
+
+will start the service at the port numbers provided. The program also offers command line help:
+
+```
+node src/index.js -- help
+```
+
+There is no way to stop the service.
+
+### Configuring
+The service **must** be configured to have
+
+* the maximum number of users,
+* the admin username,
+* the admin password,
+
+before a new user can be added. 
+
+This can be achieved through the API once the service is running. Alternatively, edit the `rabbit-self-registration.json` file to suit your purposes.
